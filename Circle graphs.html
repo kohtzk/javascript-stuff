@@ -1,0 +1,102 @@
+<html>
+    <table style="border:1px solid #000000;">
+        <tr>
+            <td>
+                <canvas id="canvas" width="800" height="800" style="border:1px solid #000000;"></canvas>
+            </td>
+            <td><div>
+                <h1>Circles!</h1>
+
+                <p id="debug"></p>
+                <button id="toggle">Toggle Lines</button>
+                <p id="maxnout">No of speeds: 8</p>
+	            <input type="range" min="1" max="20" value="8" id="maxnslider">
+	<br>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script>
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var width = canvas.width;
+        var height = canvas.height;
+        var debug = document.getElementById("debug");
+        var toggle = document.getElementById("toggle");
+        var lines = false;
+        var maxnslider = document.getElementById("maxnslider");
+        var maxnout = document.getElementById("maxnout");
+        var maxn = 8;
+        var boxsize = width/maxn;
+        var size = boxsize*8/10;
+        var buffer = (boxsize-size)/2;
+        var time = 0;
+        var timer = setInterval(draw, 50);
+        maxnslider.oninput = function() {
+            maxn = maxnslider.value*1 + 1;
+            maxnout.innerHTML = "No of speeds: " + (maxn - 1);
+            boxsize = width/maxn;
+            size = boxsize*8/10;
+            buffer = (boxsize-size)/2;
+        }
+        toggle.onclick = function() {
+            if (lines) {
+                lines = false;
+            } else {
+                lines = true;
+            }
+        }
+        function draw() {
+            ctx.clearRect(0,0,width,height);
+            for (var i = 0; i < maxn; i++) {
+                for (var j = 0; j < maxn; j++) {
+                    if (i != 0 || j != 0){
+                        if (i == 0 ) {
+                            drawgraph(i*boxsize+buffer,j*boxsize+buffer,j,j);
+                            drawdot(i*boxsize+buffer,j*boxsize+buffer,j,j);
+                        } else if (j == 0) {
+                            drawgraph(i*boxsize+buffer,j*boxsize+buffer,i,i);
+                            drawdot(i*boxsize+buffer,j*boxsize+buffer,i,i);
+                        } else {
+                            drawgraph(i*boxsize+buffer,j*boxsize+buffer,i,j);
+                            drawdot(i*boxsize+buffer,j*boxsize+buffer,i,j);
+                        }
+                        if (i == j && lines) {
+                            drawlines(i* boxsize+buffer,j*boxsize+buffer,i,j);
+                        }
+                    } 
+                }
+            }
+            debug.innerHTML = "&#1012 = " + ((time/Math.PI)*180).toFixed(0);
+            time += Math.PI/180;
+            if (time >= Math.PI*2) {
+                time = 0;
+            }
+        }
+        function drawgraph(x,y,j,k) {
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(0*j)*size/2+size/2+x, Math.sin(0*k)*size/2+size/2+y);
+            for (var i = 0; i < Math.PI*2; i+= Math.PI/180) {
+                ctx.lineTo(Math.cos(i*j)*size/2+size/2+x, Math.sin(i*k)*size/2+size/2+y);
+            }
+            ctx.stroke();
+            ctx.closePath();
+        }
+        function drawdot(x,y,j,k) {
+            ctx.beginPath();
+            ctx.arc(Math.cos(time*j)*size/2+size/2+x, Math.sin(time*k)*size/2+size/2+y, 5, 0, Math.PI*2);
+            ctx.fill();
+        }
+        function drawlines(xshift,yshift,j,k) {
+            var x = Math.cos(time*j)*size/2+size/2+xshift;
+            var y = Math.sin(time*k)*size/2+size/2+yshift;
+            ctx.beginPath();
+            ctx.moveTo(0,y);
+            ctx.lineTo(width,y);
+            ctx.moveTo(x,0);
+            ctx.lineTo(x,height);
+            ctx.stroke();
+            ctx.closePath();
+        }
+    </script>
+</html>

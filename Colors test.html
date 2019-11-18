@@ -1,0 +1,74 @@
+<html>
+    <table style="border:1px solid #000000;">
+        <tr>
+            <td>
+                <canvas id="canvas" width="600" height="600" style="border:1px solid #000000;"></canvas>
+            </td>
+            <td><div>
+                <h1>Hue to rgb test<br>for mandelbrot set</h1>
+
+                <p id="debug">test</p>
+                <p id="debug2">test</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script>
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var width = canvas.width;
+        var height = canvas.height;
+        var debug = document.getElementById("debug");
+        var color = huetohex(253);
+        ctx.fillStyle = rgbstr(color);
+        debug.innerHTML = color[0] + "," + color[1] + "," + color[2];
+        var timer = setInterval(nextcolor,100);
+        var hue = 0;
+        function nextcolor() {
+            color = huetohex(hue)
+            ctx.fillStyle = rgbstr(color);
+            ctx.fillRect(100,100,400,400);
+            debug.innerHTML = "hue: " + hue + " rgb: " + color[0] + "," + color[1] + "," + color[2];
+            hue++;
+        }
+        ctx.fillRect(100,100,400,400);
+        function huetohex(hue) {
+            hue = hue % 360;
+            var r,g,b;
+            if (hue <= 60) {
+                r = 255;
+                g = (hue/60)*255;
+                b = 0;
+            } else if (hue <= 120) {
+                hue -= 60;
+                r = (1-hue/60)*255;
+                g = 255;
+                b = 0;
+            } else if (hue <= 180) {
+                hue -= 120;
+                r = 0;
+                g = 255;
+                b = (hue/60)*255;
+            } else if (hue <= 240) {
+                hue -= 180;
+                r = 0;
+                g = (1-hue/60)*255;
+                b = 255;
+            } else if (hue <= 300) {
+                hue -= 240;
+                r = (hue/60)*255;
+                g = 0;
+                b = 255;
+            } else {
+                hue -= 300;
+                r = 255;
+                g = 0;
+                b = (1-hue/60)*255;
+            }
+            return [Math.round(r),Math.round(g),Math.round(b)];
+        }
+        function rgbstr(color) {
+            return "rgb("+color[0]+","+color[1]+","+color[2]+")"
+        }
+    </script>
+</html>

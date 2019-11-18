@@ -1,0 +1,136 @@
+<html>
+
+    <style>
+
+        #buttonlist {
+            position:relative;
+            display:block;
+            margin:auto;
+            width:300px;
+            top: 200px;
+            //height:100px;
+            //border: 1px solid black;
+        }
+
+        #buttonlist a {
+            text-decoration: none;
+            border-bottom: 1px solid black;
+            display: block;
+            padding: 4px 8px;
+            font-size: 20px;
+        }
+
+        #buttonlist a:last-child {
+            //border-bottom: none;
+        }
+
+        #contextmenu {
+            position:absolute;
+            display:none;
+            background-color: white;
+            width: 200px;
+            //height: 4em;
+            border: 1px solid black;
+            box-shadow: 2px 2px 2px grey;
+        }
+
+        #contextmenu a {
+            text-decoration: none;
+            //border-bottom: 1px solid black;
+            display: block;
+            padding: 4px 8px;
+            cursor: default;
+        }
+        
+        #contextmenu a:hover {
+            background-color: lightgrey;
+        }
+
+    </style>
+
+    <h1 id="demotitle" style="text-align: center;">this is the title</h1>
+
+    <nav id="buttonlist">
+        <a id="link1" href="#">this is a thing</a>
+        <a id="link2" href="#">another thing</a>
+        <a id="link3" href="#">something else</a>
+        <a id="link4" href="#">a fourth thing</a>
+    </nav>
+
+    <nav id="contextmenu">
+        <a id="context1" >output text to console</a>
+        <a id="context2" >change title to text</a>
+        <a id="context3" >this doesn't do anything</a>
+    </nav>
+
+    <script>
+
+
+
+        var num = 0;
+        var source;
+
+        var contextmenu = document.getElementById("contextmenu");
+
+        document.addEventListener( "contextmenu", function(e) {
+            //console.log("got a click from " + e.target.id);
+            num++;
+            if (e.target.parentElement.id == "buttonlist") {
+                e.preventDefault();
+                source = e.target;
+                showcontextmenu(e);
+            } else {
+                contextmenu.style.display = "none";
+            }
+
+        });
+
+        document.addEventListener("click", function(e) {
+            if (e.target.parentElement.id == "contextmenu") {
+                e.preventDefault();
+                //something to do something when the user clicks on the menu items
+            }
+            contextmenu.style.display = "none";
+
+
+
+        })
+
+        function showcontextmenu(e) {
+            contextmenu.style.display = "block";
+
+            if (e.clientY > window.innerHeight - contextmenu.offsetHeight) {
+                contextmenu.style.top = window.innerHeight - contextmenu.offsetHeight;
+            } else {
+                contextmenu.style.top = e.clientY;
+            }
+            if (e.clientX > window.innerWidth - contextmenu.offsetWidth) {
+                contextmenu.style.left = window.innerWidth - contextmenu.offsetWidth;
+            } else {
+                contextmenu.style.left = e.clientX;
+            }
+
+        }
+
+        var context1 = document.getElementById("context1");
+        var context2 = document.getElementById("context2");
+
+        context1.onclick = function() {
+            console.log(source.innerHTML);
+        }
+
+        context2.onclick = function() {
+            document.getElementById("demotitle").innerHTML = source.innerHTML;
+        }
+
+    </script>
+
+
+</html>
+
+
+
+
+
+
+

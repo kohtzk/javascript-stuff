@@ -1,0 +1,154 @@
+<html>
+    <table style="border:1px solid #000000;">
+        <tr>
+            <td>
+                <canvas id="canvas" width="800" height="600" style="border:1px solid #000000;"></canvas>
+            </td>
+            <td><div>
+                <h1>mandelbrot set</h1>
+                X: &emsp; &ensp;<input type="number" id="xinput" value="-2.5"><br>
+                Y: &emsp; &ensp;<input type="number" id="yinput" value="-1.5"><br>
+                Zoom: <input type="number" id="zoominput" value="1"><br>
+                <p id="boxsize"></p>
+                <button id="generate">Generate</button>
+<!--                <p id="debug">test</p>-->
+                <p id="debug2">test</p>
+				<p>try x = 0.3528, y = 0.1, zoom = 20000</p>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <script>
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var width = canvas.width;
+        var height = canvas.height;
+        var maxloops = 1000;
+        var divergence = 2;
+        ctx.translate(width/2,height/2);
+        var debug = document.getElementById("debug");
+        var debug2 = document.getElementById("debug2");
+        var xinput = document.getElementById("xinput");
+        var yinput = document.getElementById("yinput");
+        var zoominput = document.getElementById("zoominput");
+        var genbutton = document.getElementById("generate");
+        var boxsize = document.getElementById("boxsize");
+        var boundary = 1;
+        var zoom = 1;
+        var scale = 2/((width/2)*zoom); //how many pixels does 1 map to
+        var xcoord = -2.5;
+        var ycoord = -1.5;
+        var a = -155;
+        var b = 0;
+//        debug.innerHTML = a + "+" + b + "i = ";
+        var sqrd1 = compplus(compsqr(a,b),[a,b]);
+        var sqrd = [a,b]
+        //         sqrd[0] + "+" + sqrd[1] + "i " + 
+//        debug.innerHTML += mandelcalc(sqrd[0],sqrd[1]) +"\n";
+        //        var imagedat = ctx.getImageData(0,0,width, height);
+        //            setpixel(100,0,255,0,0,imagedat);
+        //        ctx.putImageData(imagedat, 0,0);
+        genset();
+        zoominput.oninput = function() {
+            zoom = zoominput.value*1;
+            scale = 2/((width/2)*zoom);
+        }
+        xinput.oninput = function() {
+            xcoord = xinput.value*1;
+        }
+        yinput.oninput = function() {
+            ycoord = this.value*1;
+        }
+        genbutton.onclick = function() {
+            genset();
+        }
+        function compsqr(a,b) {
+            return [a*a-b*b, 2*a*b];
+        }
+        function compplus(comp1, comp2) {
+            return [comp1[0]+comp2[0],comp1[1]+comp2[1]];
+        }
+        function genset() {
+            boxsize.innerHTML = "View area: " + (width*scale).toPrecision(2) + "x" + (height*scale).toPrecision(2);
+            debug2.innerHTML = "working..."
+            var imagedata = ctx.getImageData(0,0,width, height);
+            setpixel(100,100,255,0,0,imagedata);
+            for (var i = -width/2;i < width/2; i++) {
+                for (var j = -height/2; j < height/2; j++) {
+                    var loops = mandelcalc((i+width/2)*scale + xcoord,(j+height/2)*scale + ycoord);
+                    if (loops >= maxloops) {
+                        setpixel(i+width/2,j+height/2,0,0,0,imagedata);
+                    } else {
+                        var color = huetorgb(loops*1+0);
+                        setpixel(i+width/2,j+height/2,color[0],color[1],color[2],imagedata);
+                    }
+                }
+            }
+            ctx.putImageData(imagedata, 0, 0);
+            debug2.innerHTML = "Done"
+        }
+        function mandelcalc(a,b) {
+            var loops = 1;
+            var sqrd = [a,b];
+            //            debug2.innerHTML = a + "+" + b + "i = " + (loops < maxloops) + (!divcheck(sqrd[0],sqrd[1]));
+            while (loops < maxloops && !divcheck(sqrd[0],sqrd[1])) {
+                sqrd = compplus(compsqr(sqrd[0],sqrd[1]),[a,b]);
+                loops++;
+            }
+            return loops;
+        }
+        function divcheck(a,b) {
+            var divergent = false;
+            if (Math.sqrt(a*a + b*b) > divergence) {
+                divergent = true;
+            }
+            //            debug2.innerHTML += a + "+" + b + "i = " + divergent;
+            return divergent;
+        }
+        function setpixel(x,y,r,g,b, imagedata) {
+            var pos = (y*width + x) * 4;
+            imagedata.data[pos] = r;
+            imagedata.data[pos + 1] = g;
+            imagedata.data[pos + 2] = b;
+            imagedata.data[pos + 3] = 255;
+        }
+        function huetorgb(hue) {
+            hue = hue % 360;
+            var r,g,b;
+            if (hue <= 60) {
+                r = 255;
+                g = (hue/60)*255;
+                b = 0;
+            } else if (hue <= 120) {
+                hue -= 60;
+                r = (1-hue/60)*255;
+                g = 255;
+                b = 0;
+            } else if (hue <= 180) {
+                hue -= 120;
+                r = 0;
+                g = 255;
+                b = (hue/60)*255;
+            } else if (hue <= 240) {
+                hue -= 180;
+                r = 0;
+                g = (1-hue/60)*255;
+                b = 255;
+            } else if (hue <= 300) {
+                hue -= 240;
+                r = (hue/60)*255;
+                g = 0;
+                b = 255;
+            } else {
+                hue -= 300;
+                r = 255;
+                g = 0;
+                b = (1-hue/60)*255;
+            }
+            return [Math.round(r),Math.round(g),Math.round(b)];
+        }
+        function rgbstr(color) {
+            return "rgb("+color[0]+","+color[1]+","+color[2]+")"
+        }
+    </script>
+</html>

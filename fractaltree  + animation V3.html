@@ -1,0 +1,247 @@
+<html>
+<table style="border:1px solid #000000;">
+<tr>
+	<td width="800">
+	<canvas id="canvas" width="800" height="800" style="border:1px solid #000000;"></canvas>
+	</td>
+	<td>
+	<h1>Kieran's Fractal <br>Tree Generator</h1>
+	<br>
+	<p>*WARNING*<br>Changing the level slider can result in <br>too many branches for your browser to calculate</p>
+	<br>
+	<div>
+	<p id="lenout">Length: 300</p>
+	<input class="slider" type="range" min="0" max="400" value="300" id="lenslider">
+	<br>
+	<p id="reduceout">Reduce Percent: 0.5</p>
+	<input class="slider" type="range" min="0" max="100" value="50" id="reduceslider">
+	<br>
+	<p style="display: inline-block; width:200px;" id="angleout">Angle: 45</p> <input type="checkbox" id="animate" onclick="toganimate()">Animate<br>
+	<input class="slider" type="range" min="0" max="900" value="45" id="angleslider">
+	<br>
+	<p id="splitout">Branches: 2</p>
+	<input class="slider" type="range" min="2" max="8" value="2" id="splitslider">
+	<br>
+	<p id="levelout">Levels: 10</p>
+	<input class="slider" type="range" min="0" max="15" value="10" id="levelslider">
+	<p id="branchout">Branches: 1024</p>
+	<br>
+	</div>
+	<!--
+	presets broke when adding new more sliders
+	<p>Some Cool Presets:</p>
+	<button onclick="preset1()">Preset 1</button>
+	<button onclick="preset2()">Preset 2</button>
+	<button onclick="preset3()">Preset 3</button>
+	<br>
+	<button onclick="preset4()">Preset 4</button>
+	<button onclick="preset5()">Preset 5</button>
+	<button onclick="preset6()">Preset 6</button>
+	-->
+	</td>
+</tr>
+</table>
+<style>
+input.slider {
+	width: 95%;
+}
+p {	
+	margin: 0px
+}
+</style>
+<script>
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var width = canvas.width;
+var height = canvas.height;
+var vshift = 100;
+
+ctx.translate(width/2, height - vshift);
+ctx.strokeStyle = "#000000";
+ctx.lineWidth = 0.5;
+
+var lenslider = document.getElementById("lenslider");
+var lenoutput = document.getElementById("lenout");
+var reduceslider = document.getElementById("reduceslider");
+var reduceoutput = document.getElementById("reduceout");
+var angleslider = document.getElementById("angleslider");
+var angleoutput = document.getElementById("angleout");
+var splitslider = document.getElementById("splitslider");
+var splitoutput = document.getElementById("splitout");
+var levelslider = document.getElementById("levelslider");
+var leveloutput = document.getElementById("levelout");
+var branchoutput = document.getElementById("branchout");
+var animatecheck = document.getElementById("animate");
+
+var degangle = parseFloat(angleslider.value);
+var brang = Math.PI*(angleslider.value/180);
+var reduce = reduceslider.value/100;
+var angbetween = (brang*2)/(splitslider.value-1);
+var animateon = false;
+var animatetimer;
+
+drawtree();
+
+lenslider.oninput = function() {
+	lenoutput.innerHTML = "Length: " + this.value;
+	drawtree();
+}
+reduceslider.oninput = function() {
+	reduce = reduceslider.value/100;
+	reduceoutput.innerHTML = "Reduce Percent: " + this.value/100;
+	drawtree();
+}
+angleslider.oninput = function() {
+	degangle = parseFloat(angleslider.value);
+	brang = Math.PI*(degangle/180);
+	angbetween = (brang*2)/(splitslider.value-1);
+	angleoutput.innerHTML = "Angle: " + degangle;
+	drawtree();
+}
+levelslider.oninput = function() {
+	leveloutput.innerHTML = "Levels: " + this.value;
+	branchoutput.innerHTML = "Branches: " + Math.pow(splitslider.value, this.value);
+	drawtree();
+}
+splitslider.oninput = function() {
+	splitoutput.innerHTML = "Branches: " + this.value;	
+	branchoutput.innerHTML = "Branches: " + Math.pow(splitslider.value, levelslider.value);
+	angbetween = (brang*2)/(splitslider.value-1);
+	drawtree();
+}
+
+function drawtree(){
+	ctx.clearRect(-canvas.width/2, -(canvas.height - vshift), canvas.width, canvas.height);
+	branch(0, 0, 0, lenslider.value, levelslider.value);
+	return;
+}
+
+function branch(x, y, angle, length, levleft){
+	var newx = x + (length * Math.sin(angle));
+	var newy = y - (length * Math.cos(angle));
+	
+	ctx.beginPath();
+	ctx.moveTo(x,y);
+	ctx.lineTo(newx, newy);
+	ctx.stroke();
+	ctx.closePath();
+	
+	if (levleft != 0) {
+		var i = 0;
+		for (i = 0; i < splitslider.value; i++) {
+			branch(newx, newy, angle - brang + (angbetween*i), length*reduce, levleft-1);
+		}
+		//var i = 0;
+		while (i < splitslider.value) {
+		//branch(newx, newy, angle - brang + (angbetween*i), length*reduce, levleft-1);
+		i++;
+		}
+		//branch(newx, newy, angle - brang, length*reduce, levleft-1);
+		//branch(newx, newy, angle + brang, length*reduce, levleft-1);
+	}
+	
+	return;
+
+}
+
+function toganimate(){
+	if(animatecheck.checked){
+		animateon = true;
+		animatetimer = setInterval(function(){ animate() }, 25);
+	}else{
+		animateon = false;
+		clearInterval(animatetimer);
+	}
+	//animateon = !animateon;
+	//if(animate){
+	//	while(animate){
+	//	brang += Math.PI*(1/180);
+	//	drawtree();
+	//	setTimeout(100);
+	//	}
+	//}
+	//branchoutput.innerHTML = animate;
+	//animate();
+	return;
+}
+
+function animate(){
+	//branchoutput.innerHTML = animateon;
+	degangle += 1;
+	brang = Math.PI*(degangle/180);
+	angleoutput.innerHTML = "Angle: " + degangle;
+	angbetween = (brang*2)/(splitslider.value-1);
+	drawtree();
+	//USE THIS STUFF
+	//setInterval() returns an interval ID, which you can pass to clearInterval():
+//
+//var refreshIntervalId = setInterval(fname, 10000);
+
+/* later */
+//clearInterval(refreshIntervalId);
+	return;
+}
+
+function updateall(){
+	lenoutput.innerHTML = "Length: " + lenslider.value;
+	reduce = reduceslider.value/100;
+	reduceoutput.innerHTML = "Reduce Percent: " + reduceslider.value/100;
+	degangle = parseFloat(angleslider.value);
+	brang = Math.PI*(degangle/180);
+	angbetween = (brang*2)/(splitslider.value-1);
+	angleoutput.innerHTML = "Angle: " + degangle;
+	leveloutput.innerHTML = "Levels: " + levelslider.value;
+	branchoutput.innerHTML = "Branches: " + Math.pow(splitslider.value, branchslider.value);
+	splitoutput.innerHTML = "Branches: " + splitslider.value;	
+	angbetween = (brang*2)/(splitslider.value-1);
+	drawtree();
+}
+
+function preset2(){
+	lenslider.value = 200;
+	reduceslider.value = 70;
+	angleslider.value = 25;
+	levelslider.value = 13;
+	updateall();
+}
+function preset4(){
+	lenslider.value = 250;
+	reduceslider.value = 70;
+	angleslider.value = 90;
+	levelslider.value = 13;
+	updateall();
+}
+function preset3(){
+	lenslider.value = 150;
+	reduceslider.value = 75;
+	angleslider.value = 45;
+	levelslider.value = 13;
+	updateall();
+}
+function preset1(){
+	lenslider.value = 110;
+	reduceslider.value = 85;
+	angleslider.value = 12;
+	levelslider.value = 13;
+	updateall();
+}
+function preset5(){
+	lenslider.value = 35;
+	reduceslider.value = 100;
+	angleslider.value = 12;
+	levelslider.value = 13;
+	updateall();
+}
+function preset6(){
+	lenslider.value = 330;
+	reduceslider.value = 55;
+	angleslider.value = 20;
+	levelslider.value = 13;
+	updateall();
+}
+</script>
+
+
+
+
+

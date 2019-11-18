@@ -1,0 +1,229 @@
+<html>
+    <table style="border:1px solid #000000;">
+        <tr>
+            <td>
+                <canvas id="canvas" width="800" height="800" style="border:1px solid #000000;"></canvas>
+            </td>
+            <td><div>
+                <h1>Sandpile Generator</h1>
+                <button id="start" class="input">Start</button><button id="reset" class="input">Reset</button><br><br>
+                Amount of sand to drop: <input type="number" value="100000" id="sandamount"><br><br>
+                Iterations: <p id="loopcount">0</p><br><br>
+                <p id="debug"></p>
+                </div>
+                <canvas id="colordemo" width="240" height="100"></canvas>
+                <table class="theme">
+                <tr>
+                    <td><button id="theme1" class="theme">Theme 1</button></td>
+                    <td><button id="theme2" class="theme">Theme 2</button></td>
+                    <td><button id="theme3" class="theme">Theme 3</button></td>
+                </tr>
+                <tr>
+                    <td><button id="theme4" class="hidden">Theme 4</button></td>
+                    <td><button id="theme5" class="hidden">Theme 5</button></td>
+                    <td><button id="theme6" class="hidden">Theme 6</button></td>
+                </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <style>
+        button.input {
+            width: 100px; 
+            margin-left: 20px;
+            margin-right: 10px
+        }
+        input {
+            width: 100px
+        }
+        p {
+            display: inline
+        }
+        button.theme {
+            width: 70px;
+            display: block;
+            margin: auto
+        }
+        table.theme {
+            width: 100%;
+        }
+        button.hidden {
+            display: none
+        }
+        #colordemo {
+            display: block;
+            margin: auto
+        }
+    </style>
+    <script>
+        //[ADD COLOR SCHEME BUTTONS]
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var colordemo = document.getElementById("colordemo");
+        var democtx = colordemo.getContext("2d");
+        var width = canvas.width;
+        var height = canvas.height;
+        var pixels = new Array(width * height).fill(0);
+        var newpixels = new Array(width * height).fill(0);
+        var loopcount = document.getElementById("loopcount");
+        var start = document.getElementById("start");
+        var reset = document.getElementById("reset");
+        var sandamount = document.getElementById("sandamount");
+        var debug = document.getElementById("debug");
+        var loops = 0;
+        var timer;
+        var themes = [
+            [[0,0,255],[255,0,0],[255,255,0],[0,255,0]],
+            [[255,255,0],[0,185,63],[0,104,255],[122,0,229]],
+            [[0,51,0],[0,255,255],[255,64,64],[225,160,0]],
+            [[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+            [[0,0,0],[0,0,0],[0,0,0],[0,0,0]],
+            [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+        ]
+        var theme = themes[0];
+        display();
+        demotheme();
+        demowords();
+        
+        document.getElementById("theme1").onclick = function() {changetheme(0);}
+        document.getElementById("theme2").onclick = function() {changetheme(1);}
+        document.getElementById("theme3").onclick = function() {changetheme(2);}
+        document.getElementById("theme4").onclick = function() {changetheme(3);}
+        document.getElementById("theme5").onclick = function() {changetheme(4);}
+        document.getElementById("theme6").onclick = function() {changetheme(5);}
+        
+        function changetheme(i) {
+            theme = themes[i];
+            display();
+            demotheme();
+        }
+        
+        function demotheme() {
+            var buffer = 10;
+            var demosize = 20;
+            for (var i = 0; i < 2; i++) {
+                for (var j = 0; j < 2; j++) {
+                    democtx.fillStyle = "rgb(0,0,0)";
+                    democtx.fillRect(i*colordemo.width/2 + buffer-1, j*colordemo.height/2 + buffer-1, demosize + 2, demosize + 2);
+                    democtx.fillStyle = "rgb(" + theme[i + 2*j][0] + "," + theme[i + 2*j][1] + "," + theme[i + 2*j][2] +")";
+                    democtx.fillRect(i*colordemo.width/2 + buffer, j*colordemo.height/2 + buffer, demosize, demosize);
+                    
+                }
+            }
+        }
+        
+        function demowords() {
+            var bufferx = 40;
+            var buffery = 25;
+            democtx.fillStyle = "#000000";
+            democtx.font = "15px Arial";
+            democtx.fillText("0 Grains", bufferx, buffery);
+            democtx.fillText("1 Grain", colordemo.width/2 + bufferx, buffery);
+            democtx.fillText("2 Grains", bufferx, colordemo.height/2 + buffery);
+            democtx.fillText("3 Grains", colordemo.width/2 + bufferx, colordemo.height/2 + buffery);
+        }
+        
+        start.onclick = function() {
+            if (start.innerHTML == "Start") {
+                timer = setInterval(loop, 0);
+                start.innerHTML = "Pause";
+                if (sandamount.readOnly == false) {
+                      pixels[convert(width/2,height/2)] = sandamount.value;
+                }
+                sandamount.readOnly = true;
+                sandamount.disabled = true;
+            } else {
+                clearInterval(timer);
+                start.innerHTML = "Start";
+            }
+        }
+        
+        reset.onclick = function() {
+            sandamount.readOnly = false;
+            sandamount.disabled = false;
+            clearInterval(timer);
+            start.innerHTML = "Start";
+            for (var i = 0; i < pixels.length; i++) {
+                pixels[i] = 0;
+            }
+            display();
+            loops = 0
+            loopcount.innerHTML = loops;
+        }
+        
+        function loop() {
+            for(var i = 0; i < 1; i++) {
+                calculate();
+                loops += 1;
+            }
+            display();
+            loopcount.innerHTML = loops;
+        }
+        
+        function setpixel(x,y,r,g,b, imagedata) {
+            var pos = (y*width + x) * 4;
+            imagedata.data[pos] = r;
+            imagedata.data[pos + 1] = g;
+            imagedata.data[pos + 2] = b;
+            imagedata.data[pos + 3] = 255;
+        }
+        
+        function calculate() {
+            var done = true;
+            for (var i = 0; i < width; i++) {
+                for (var j = 0; j < height; j++) {
+                     while (pixels[convert(i,j)] > 3) {
+                         done = false
+                        pixels[convert(i,j)] -= 4;
+                        addsand(i + 1,j);
+                        addsand(i - 1,j);
+                        addsand(i,j + 1);
+                        addsand(i,j - 1);
+                    }
+                    newpixels[convert(i,j)] += pixels[convert(i,j)];
+                }
+            }
+            pixels = newpixels;
+            newpixels = new Array(width * height).fill(0);
+            if (done) {
+                clearInterval(timer);
+            }
+        }
+        
+        function convert(x,y) {
+            return x + y * width;
+        }
+        
+        function addsand(x,y) {
+            if (x > -1 && y > -1 && x < width && y < height) {
+                newpixels[convert(x,y)] += 1;
+            }
+        }
+        
+        function display() {
+            var imagedata = ctx.getImageData(0,0, width, height);
+            for (var i = 0; i < width; i++) {
+                for (var j = 0; j < height; j++) {
+                    switch (pixels[convert(i,j)]) {
+                       case 0:
+                           setpixel(i,j,theme[0][0],theme[0][1],theme[0][2],imagedata);
+                           break;
+                       case 1:
+                           setpixel(i,j,theme[1][0],theme[1][1],theme[1][2],imagedata);
+                           break;
+                       case 2:
+                           setpixel(i,j,theme[2][0],theme[2][1],theme[2][2],imagedata);
+                           break;
+                       case 3:
+                           setpixel(i,j,theme[3][0],theme[3][1],theme[3][2],imagedata);
+                           break;
+                       default:
+                           setpixel(i,j,theme[3][0],theme[3][1],theme[3][2],imagedata);
+                   }
+                }
+            }
+            ctx.putImageData(imagedata, 0,0);
+        }
+        
+    </script>
+</html>

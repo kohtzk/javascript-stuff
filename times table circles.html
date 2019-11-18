@@ -1,0 +1,365 @@
+<html>
+    <table style="border:1px solid #000000;">
+        <tr>
+            <td width="800">
+                <canvas id="canvas" width="800" height="800"></canvas>
+            </td>
+            <td>
+                <h1>Times Table Circle</h1>
+                <p id="explanation">This works by numbering nodes around a circle, and then connecting each dot with the result of multiplying itself with a particular multiplier.<br><br>
+                    The number of nodes is controlled by the first slider.<br><br>
+                    The multiplier each number is multiplied by is controlled by the second slider.<br><br>
+                    The third slider shifts each output by a specified amount.<br><br></p>
+                <div>
+                    <div class="label"><p id="dotno">Number Of Nodes:</p>
+                        <div class="inputbox"><button class="minus" id="dotsdown">-</button><input id="dotsbox" class="number" type="number" value = 200><button class="plus" id="dotsup">+</button></div></div>
+                    <input class="slider" type="range" min="10" max="2000" value="200" id="dotnoslider">
+                    <br>
+                    <div class="label"><p id="ttable">Multiplier:</p><label>Animate<input id="tableanimate" class="animate" type="checkbox"></label>
+                        <div class="inputbox"><button class="minus" id="tabledown">-</button><input id="tablebox" class="number" type="number" value = 2><button class="plus" id="tableup">+</button></div></div>
+                    <input class="slider" type="range" min="0" max="200" value="2" id="ttableslider">
+                    <br>
+                    <div class="label"><p id="shift">Shift:</p><label>Animate<input id="shiftanimate" class="animate" type="checkbox"></label>
+                        <div class="inputbox"><button class="minus" id="shiftdown">-</button><input id="shiftbox" class="number" type="number" value = 0><button class="plus" id="shiftup">+</button></div></div>
+                    <input class="slider" type="range" min="0" max="200" value="0" id="shiftslider">
+                    <br>
+                    <br>
+                </div>
+            </td>
+        </tr>
+    </table>
+    <style>
+        * {
+            font-family: arial;
+        }
+        label {
+            text-align: center;
+            display: block;
+            float: right;
+            line-height: 19px;
+            height: 19px;
+            width: 80px;
+            background-color: #d0d0d0;
+            border-radius: 3px;
+            user-select: none;
+            cursor: pointer;
+            border: 1px solid #909090;
+        }
+        div.label, input.slider, div.input {
+            width: 95%;
+        }
+        input.animate {
+            display: none;
+        }
+        div p {	
+            float: left;
+            margin: 0px;
+        }
+        canvas {
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input.number {
+            width:50px;
+            height: 21px;
+            text-align: center;
+            border: 1px solid #909090;
+            border-width: 1px 0px;
+        }
+        div.inputbox {
+            display: block;
+            height: 21px;
+            width: 110px;
+            margin: auto;
+        }
+        button {
+            user-select: none;
+            width: 30px;
+            height: 21px;
+            border: 1px solid #909090;
+            background-color: #d0d0d0;
+            cursor: pointer;
+            outline:0;
+        }
+        button.minus {
+            border-radius: 3px 0px 0px 3px;
+        }
+        button.plus {
+            border-radius: 0px 3px 3px 0px;
+        }
+        button:hover {
+            background-color: #b0b0b0;
+        }
+        button:active {
+            background-color: #909090;
+        }
+        #explanation {
+            display: none;
+        }
+    </style>
+    <script>
+
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
+        var width = canvas.width;
+        var height = canvas.height;
+
+        var dotsout = document.getElementById("dotno");
+        var tableout = document.getElementById("ttable");
+        var shiftout = document.getElementById("shift");
+
+        var dotslider = document.getElementById("dotnoslider");
+        var dotsbox = document.getElementById("dotsbox");
+        var dotsup = document.getElementById("dotsup");
+        var dotsdown = document.getElementById("dotsdown");
+
+        var tableslider = document.getElementById("ttableslider");
+        var tablebox = document.getElementById("tablebox");
+        var tableup = document.getElementById("tableup");
+        var tabledown = document.getElementById("tabledown");
+        var tabletoggle = document.getElementById("tableanimate");
+
+        var shiftslider = document.getElementById("shiftslider");
+        var shiftbox = document.getElementById("shiftbox");
+        var shiftup = document.getElementById("shiftup");
+        var shiftdown = document.getElementById("shiftdown");
+        var shifttoggle = document.getElementById("shiftanimate");
+
+        var totaldots = 200;
+        var lastdots = totaldots;
+        var table = 2;
+        var shift = 0;
+        var tableanimate = false;
+        var shiftanimate = false;
+        var tabletimer;
+        var shifttimer;
+        
+        tabletoggle.onclick = function() {
+            tableanimate = !tableanimate;
+            if (tableanimate) {
+                tabletimer = setInterval(function(){ tableanimater() }, 10);
+            } else {
+                clearInterval(tabletimer);
+            }
+            buttontoggle(this);
+        }
+        
+        function tableanimater() {
+            table += 0.01;
+            if (table > totaldots)
+                table -= totaldots;
+            drawcircle();
+            table = Math.round(table*100)/100
+            tablebox.value = table;
+            tableslider.value = table;
+        }
+
+        tabletoggle.parentElement.onmouseover = function() {
+            if (!tableanimate)
+                this.style.backgroundColor = "#b0b0b0";
+        }
+
+        tabletoggle.parentElement.onmouseout = function() {
+            if (!tableanimate)
+                this.style.backgroundColor = "#d0d0d0";
+        }
+        
+        tabletoggle.parentElement.onmousedown = function() {
+            if (!tableanimate)
+                this.style.backgroundColor = "#909090";
+        }
+
+        shifttoggle.onclick = function() {
+            shiftanimate = !shiftanimate;
+            if (shiftanimate) {
+                shifttimer = setInterval(function(){ shiftanimater() }, 10);
+            } else {
+                clearInterval(shifttimer);
+            }
+            buttontoggle(this);
+        }
+        
+        function shiftanimater() {
+            shift++;
+            if (shift > totaldots)
+                shift -= totaldots;
+            drawcircle();
+            shift = Math.round(shift*100)/100
+            shiftbox.value = shift;
+            shiftslider.value = shift;
+        }
+
+        shifttoggle.parentElement.onmouseover = function() {
+            if (!shiftanimate)
+                this.style.backgroundColor = "#b0b0b0";
+        }
+
+        shifttoggle.parentElement.onmouseout = function() {
+            if (!shiftanimate)
+                this.style.backgroundColor = "#d0d0d0";
+        }
+        
+        shifttoggle.parentElement.onmousedown = function() {
+            if (!shiftanimate)
+                this.style.backgroundColor = "#909090";
+        }
+
+        function buttontoggle(button) {
+            if (button.checked)
+                button.parentElement.style.backgroundColor = "#909090";
+            else
+                button.parentElement.style.backgroundColor = "#d0d0d0";
+        }
+
+        //DOTS INPUT STUFF
+        dotslider.oninput = function() {
+            totaldots = dotslider.value * 1;
+            dotsbox.value = totaldots;
+            drawcircle();
+            tableslider.max = totaldots;
+            shiftslider.max = totaldots; //could reset shift to 0 whenever the dots is changed
+        }
+        dotsbox.oninput = function() {
+            totaldots = dotsbox.value * 1;
+            if (totaldots > 2000){
+                totaldots = 2000;
+                dotsbox.value = totaldots;
+            }
+            dotslider.value = totaldots;
+            drawcircle();
+            tableslider.max = totaldots;
+            shiftslider.max = totaldots;
+        }
+        dotsup.onclick = function() {
+            totaldots++;
+            if (totaldots > 2000)
+                totaldots = 2000;
+            drawcircle();
+            dotsbox.value = totaldots;
+            dotslider.value = totaldots;
+        }
+        dotsdown.onclick = function() {
+            totaldots--;
+            drawcircle();
+            dotsbox.value = totaldots;
+            dotslider.value = totaldots;
+        }
+
+        //TABLE INPUT STUFF
+        tableslider.oninput = function() {
+            table = tableslider.value * 1;
+            tablebox.value = table;
+            drawcircle();
+        }
+        tablebox.oninput = function() {
+            table = tablebox.value * 1;
+            if (table > totaldots){
+                table = totaldots;
+                tablebox.value = table;
+            }
+            if (table < 0){
+                table = 0
+                tablebox.value = table;
+            }
+            tableslider.value = table;
+            drawcircle();
+        }
+        tableup.onclick = function() {
+            table++;
+            if (table > totaldots)
+                table = totaldots;
+            drawcircle();
+            tablebox.value = table;
+            tableslider.value = table;
+        }
+        tabledown.onclick = function() {
+            table--;
+            if (table < 0)
+                table = 0
+            drawcircle();
+            tablebox.value = table;
+            tableslider.value = table;
+        }
+
+        //SHIFT INPUT STUFF
+        shiftslider.oninput = function() {
+            shift = shiftslider.value * 1;
+            shiftbox.value = shift;
+            drawcircle();
+        }
+        shiftbox.oninput = function() {
+            shift = shiftbox.value * 1;
+            if (shift > totaldots){
+                shift = totaldots;
+                shiftbox.value = shift;
+            }
+            if (shift < 0){
+                shift = 0
+                shiftbox.value = shift;
+            }
+            shiftslider.value = shift;
+            drawcircle();
+        }
+        shiftup.onclick = function() {
+            shift++;
+            if (shift > totaldots)
+                shift = totaldots;
+            drawcircle();
+            shiftbox.value = shift;
+            shiftslider.value = shift;
+        }
+        shiftdown.onclick = function() {
+            shift--;
+            if (shift < 0)
+                shift = 0
+            drawcircle();
+            shiftbox.value = shift;
+            shiftslider.value = shift;
+        }
+
+        drawcircle();
+        //        setTimeout(function(){ setInterval(function(){ animate() }, 10); }, 1000)
+        //        setInterval(function(){ animate() }, 10);
+
+        //        function animate() {
+        //            ctx.clearRect(0,0, width, height);
+        //            //            tableout.innerHTML = "Times Table: " + Math.round(table * 100) / 100;
+        //            tableout.innerHTML = "Shift: " + Math.round(shift);
+        //            drawcircle(width/2, height/2, width/2, 500, table);
+        //            //            table += 0.01;
+        //            shift += 0.1;
+        //        }
+
+        function drawcircle() {
+            var coords;
+            ctx.clearRect(0,0, width, height);
+            ctx.beginPath();
+            for (i = 0; i < totaldots; i++) {
+                coords = finddot(i, width/2);
+                ctx.moveTo(width/2+coords[0],height/2+coords[1]);
+                coords = finddot(i*table+shift, width/2);
+                ctx.lineTo(width/2+coords[0],height/2+coords[1]);
+            }
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function finddot(dotno, size) {
+            var x, y;
+            x = Math.cos((dotno/totaldots)*2*Math.PI)*size;
+            y = Math.sin((dotno/totaldots)*2*Math.PI)*size;
+            return [x,y];
+        }
+
+    </script>
+
+
+
+</html>
